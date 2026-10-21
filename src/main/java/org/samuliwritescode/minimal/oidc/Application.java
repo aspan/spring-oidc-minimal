@@ -1,5 +1,6 @@
 package org.samuliwritescode.minimal.oidc;
 
+import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.dependency.StyleSheet;
 import com.vaadin.flow.component.html.Anchor;
 import com.vaadin.flow.component.html.Div;
@@ -8,6 +9,7 @@ import com.vaadin.flow.component.page.AppShellConfigurator;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.router.RouteAlias;
 import com.vaadin.flow.server.auth.AnonymousAllowed;
+import com.vaadin.flow.spring.security.AuthenticationContext;
 import com.vaadin.flow.spring.security.VaadinSecurityConfigurer;
 import com.vaadin.flow.theme.aura.Aura;
 import jakarta.annotation.security.PermitAll;
@@ -32,12 +34,12 @@ public class Application implements AppShellConfigurator {
     @Route("secured")
     @PermitAll
     public static class SecuredRoute extends Div {
-        public SecuredRoute() {
+        public SecuredRoute(AuthenticationContext authenticationContext) {
             OidcUser user = (OidcUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
             add(new Paragraph("This is a secured route and you are the user '%s'".formatted(user.getName())));
-            Anchor logoutLink = new Anchor("/logout", "logout");
-            logoutLink.setRouterIgnore(true); // <-- /logout is handled by spring and not Vaadin
-            add(logoutLink);
+            Button logout = new Button("logout");
+            logout.addClickListener(event -> authenticationContext.logout());
+            add(logout);
         }
     }
 
