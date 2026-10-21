@@ -139,7 +139,7 @@ spring.security.oauth2.client.provider.keycloak.user-name-attribute=preferred_us
 You will need to have some instance of Keycloak server running. If you don't, then just use Keycloak development
 Docker image like:
 
-`docker run -p 8081:8080 -e KEYCLOAK_ADMIN=admin -e KEYCLOAK_ADMIN_PASSWORD=admin quay.io/keycloak/keycloak:23.0.7 start-dev`
+`docker run -p 8081:8080 -e KC_BOOTSTRAP_ADMIN_USERNAME=admin -e KC_BOOTSTRAP_ADMIN_PASSWORD=admin quay.io/keycloak/keycloak:latest start-dev`
 
 and follow the guide for setting up realm, client-id and user like
 so https://www.keycloak.org/getting-started/getting-started-docker

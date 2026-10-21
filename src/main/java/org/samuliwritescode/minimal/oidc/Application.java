@@ -1,27 +1,30 @@
 package org.samuliwritescode.minimal.oidc;
 
+import com.vaadin.flow.component.dependency.StyleSheet;
 import com.vaadin.flow.component.html.Anchor;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.Paragraph;
+import com.vaadin.flow.component.page.AppShellConfigurator;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.router.RouteAlias;
 import com.vaadin.flow.server.auth.AnonymousAllowed;
-import com.vaadin.flow.spring.security.VaadinWebSecurity;
+import com.vaadin.flow.spring.security.VaadinSecurityConfigurer;
+import com.vaadin.flow.theme.aura.Aura;
 import jakarta.annotation.security.PermitAll;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.oauth2.client.oidc.web.logout.OidcClientInitiatedLogoutSuccessHandler;
-import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
+import org.springframework.security.web.SecurityFilterChain;
 
 @SpringBootApplication // <-- So that you may run this as a Spring Boot application
-public class Application {
+@StyleSheet(Aura.STYLESHEET)
+public class Application implements AppShellConfigurator {
     public static void main(String[] args) {
         SpringApplication.run(Application.class, args); // <-- So that you may run this directly as a Java application
     }
@@ -52,19 +55,13 @@ public class Application {
 
     @EnableWebSecurity
     @Configuration
-    public static class SecurityConfiguration extends VaadinWebSecurity {
-        private final OidcClientInitiatedLogoutSuccessHandler logoutSuccessHandler;
-
-        public SecurityConfiguration(@Autowired ClientRegistrationRepository clientRegistrationRepository) {
-            logoutSuccessHandler = new OidcClientInitiatedLogoutSuccessHandler(clientRegistrationRepository);
-            logoutSuccessHandler.setPostLogoutRedirectUri("http://localhost:8080/unsecured"); // <-- Where Keycloak will redirect after logging out
-        }
-
-        @Override
-        protected void configure(HttpSecurity http) throws Exception {
-            http.oauth2Login(Customizer.withDefaults()); // <-- This is important to let Spring Security to know to redirect to external login page.
-            http.logout(c -> c.logoutSuccessHandler(logoutSuccessHandler)); // <-- Logout with oauth2 must be handled with Keycloak
-            super.configure(http);
+    public static class SecurityConfiguration {
+        @Bean
+        SecurityFilterChain securityFilterChain(HttpSecurity http) {
+            return http.with(VaadinSecurityConfigurer.vaadin().oauth2LoginPage(
+                            "/oauth2/authorization/keycloak",
+                            "{baseUrl}/unsecured"), Customizer.withDefaults())
+                    .build();
         }
     }
 }

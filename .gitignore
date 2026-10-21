@@ -17,5 +17,4 @@ buildNumber.properties
 .classpath
 /.idea/
 
-/frontend/generated/
-/frontend/index.html
+/src/main/frontend/generated/
