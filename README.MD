@@ -50,35 +50,32 @@ the logged-in user.
 
 ### Routes
 
-The first route is for secured part that should be login enforced. Annotation @PermitAll = any logged-in user. Route
-/logout is configured by Spring behind the scenes and is by convention.
+The first route is for secured part that should be login enforced. Annotation @PermitAll = any logged-in user.
 
 Second route for unsecured part that is public and accessing it does not require user to login. Annotation
 @AnonymousAllowed = not necessary to be logged in.
 
 ```java
-@Route("secured")
+    @Route("secured")
 @PermitAll
-public class SecuredRoute extends Div {
-    public SecuredRoute() {
+public static class SecuredRoute extends Div {
+    public SecuredRoute(AuthenticationContext authenticationContext) {
         OidcUser user = (OidcUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         add(new Paragraph("This is a secured route and you are the user '%s'".formatted(user.getName())));
-        Anchor logoutLink = new Anchor("/logout", "logout");
-        // /logout is handled by spring and not Vaadin
-        logoutLink.setRouterIgnore(true); 
-        add(logoutLink);
+        Button logout = new Button("logout");
+        logout.addClickListener(event -> authenticationContext.logout());
+        add(logout);
     }
 }
 
 @Route("unsecured")
 @RouteAlias("")
 @AnonymousAllowed
-public class UnsecuredRoute extends Div {
+public static class UnsecuredRoute extends Div {
     public UnsecuredRoute() {
         add(new Paragraph("Welcome to unsecured route. This you may access without logging in."));
         Anchor linkToSecuredPage = new Anchor("/secured", "This route will require you to login");
-        // So that spring security web filter will catch it
-        linkToSecuredPage.setRouterIgnore(true); 
+        linkToSecuredPage.setRouterIgnore(true); // <-- So that spring security web filter will catch it
         add(linkToSecuredPage);
     }
 }
@@ -100,22 +97,14 @@ Oauth2 login is with default configuration by convention values.
 ```java
 @EnableWebSecurity
 @Configuration
-public class SecurityConfiguration extends VaadinWebSecurity {
-    private final OidcClientInitiatedLogoutSuccessHandler logoutSuccessHandler;
-
-    public SecurityConfiguration(@Autowired ClientRegistrationRepository clientRegistrationRepository) {
-        logoutSuccessHandler = new OidcClientInitiatedLogoutSuccessHandler(clientRegistrationRepository);
-        // Where Keycloak will redirect after logging out
-        logoutSuccessHandler.setPostLogoutRedirectUri("http://localhost:8080/unsecured"); 
-    }
-
-    @Override
-    protected void configure(HttpSecurity http) throws Exception {
-        // This is important to let Spring Security to know to redirect to external login page.
-        http.oauth2Login(Customizer.withDefaults()); 
-        // Logout with oauth2 must be handled with Keycloak
-        http.logout(c -> c.logoutSuccessHandler(logoutSuccessHandler)); 
-        super.configure(http);
+public static class SecurityConfiguration {
+    @Bean
+    SecurityFilterChain securityFilterChain(HttpSecurity http) {
+        return http.with(VaadinSecurityConfigurer.vaadin().oauth2LoginPage(
+                           "/oauth2/authorization/keycloak",
+                           "{baseUrl}/unsecured"), 
+                         Customizer.withDefaults())
+                   .build();
     }
 }
 ```
@@ -134,16 +123,6 @@ spring.security.oauth2.client.provider.keycloak.issuer-uri=http://localhost:8081
 spring.security.oauth2.client.provider.keycloak.user-name-attribute=preferred_username
 ```
 
-## Prerequisites: OpenID Connect server
-
-You will need to have some instance of Keycloak server running. If you don't, then just use Keycloak development
-Docker image like:
-
-`docker run -p 8081:8080 -e KC_BOOTSTRAP_ADMIN_USERNAME=admin -e KC_BOOTSTRAP_ADMIN_PASSWORD=admin quay.io/keycloak/keycloak:latest start-dev`
-
-and follow the guide for setting up realm, client-id and user like
-so https://www.keycloak.org/getting-started/getting-started-docker
-
 ## To run it
 
 application.properties that was defined in previous chapter expects Keycloak server running with client ID "
@@ -153,4 +132,5 @@ Run the application by
 
 `mvn spring-boot:run`
 
-then open your browser at http://localhost:8080/
+It will spin up the keycloak server with docker compose and provision it with two accounts 'admin:admin' and
+'user:user' then open your browser at http://localhost:8080/.

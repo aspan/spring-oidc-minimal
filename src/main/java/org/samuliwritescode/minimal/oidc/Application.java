@@ -62,7 +62,8 @@ public class Application implements AppShellConfigurator {
         SecurityFilterChain securityFilterChain(HttpSecurity http) {
             return http.with(VaadinSecurityConfigurer.vaadin().oauth2LoginPage(
                             "/oauth2/authorization/keycloak",
-                            "{baseUrl}/unsecured"), Customizer.withDefaults())
+                            "{baseUrl}/unsecured"),
+                             Customizer.withDefaults())
                     .build();
         }
     }
