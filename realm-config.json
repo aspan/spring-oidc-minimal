@@ -6,7 +6,7 @@
       "username": "admin",
       "enabled": true,
       "emailVerified": true,
-      "email" : "admin@example.com",
+      "email": "admin@example.com",
       "firstName": "Admin",
       "lastName": "User",
       "credentials": [
@@ -15,13 +15,15 @@
           "value": "admin"
         }
       ],
-      "realmRoles": ["admin"]
+      "realmRoles": [
+        "admin"
+      ]
     },
     {
       "username": "user",
       "enabled": true,
       "emailVerified": true,
-      "email" : "user@example.com",
+      "email": "user@example.com",
       "firstName": "Normal",
       "lastName": "User",
       "credentials": [
@@ -30,7 +32,9 @@
           "value": "user"
         }
       ],
-      "realmRoles": ["user"]
+      "realmRoles": [
+        "user"
+      ]
     }
   ],
   "roles": {
@@ -47,7 +51,9 @@
     {
       "clientId": "minimal-spring-oidc-client",
       "publicClient": true,
-      "redirectUris": ["*"],
+      "redirectUris": [
+        "*"
+      ],
       "directAccessGrantsEnabled": true
     }
   ]
